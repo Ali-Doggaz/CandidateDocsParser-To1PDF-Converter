@@ -5,11 +5,11 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 
 
 def find_cv():
-    '''
+    """
     :param: N/A
     :return: The name of the file that is the most likely to be the candidate's resume/cv, as well as the candidate email
     adress, his phone number, and his name.
-    '''
+    """
 
     #Special case where candidate's folder is empty or contains only 1 file
 
@@ -66,6 +66,10 @@ def find_cv():
     return cv_name, email, phone, FullName
 
 def find_motivation_letter(cv_name):
+    """
+    :param cv_name: (string) Name of the CV/Resume file
+    :return: (String) The name of the file that is the most likely to be the candidate's motivation letter
+    """
     # If a file contains the word "motivation", returns directly that file name
     for name in os.listdir('PDF_Converted_Files'):
         if name == cv_name:  # The motivation letter can't be the same file as the resume.
@@ -93,14 +97,19 @@ def generate_number():
 
     return ID
 
-def merge_pdfs(cv_name,motivation_letter_name, EMAIL, PHONE_NUMBER, FULLNAME):
-    if not len(os.listdir("PDF_Converted_Files")):
-        return
-    file_name = "Candidat" + str(generate_number()) + ".pdf"
-    output_file = "PDF_Converted_Files" + os.sep + file_name
-    root = os.path.abspath(os.curdir)
+def Create_First_PDF_Page(FULLNAME, EMAIL, PHONE_NUMBER, output_file):
+    '''
 
-    #Generate a PDF containing the first page, with the candidate name, phone number, and email
+    :param FULLNAME: (string) Name of the candidate
+    :param EMAIL: (string) Email of the candidate
+    :param PHONE_NUMBER: (string) Phone number of the candidate
+    :param output_file: (string) Relative output path for the PDF we will create ("PDF_Converted_Files" + os.sep + file_name)
+
+    Generate a PDF containing 1 page, with the candidate name, phone number, and email.
+    The PDF will be stored in the 'output_file' path.
+
+    '''
+
     pdf = FPDF()
     pdf.add_page()
     pdf.set_text_color(112, 100, 0)
@@ -109,6 +118,20 @@ def merge_pdfs(cv_name,motivation_letter_name, EMAIL, PHONE_NUMBER, FULLNAME):
     pdf.set_y(112)
     pdf.multi_cell(h=10, align='C', w=0, txt=text, border=0)
     pdf.output(output_file, 'F')
+
+def Merge_Pdfs_Pages(root, output_file, cv_name, motivation_letter_name, file_name):
+    """
+
+    :param root: (string) Absolute path to the current project directory (os.path.abspath(os.curdir))
+    :param output_file: (string) Relative output path for the PDF we will create ("PDF_Converted_Files" + os.sep + file_name)
+    :param cv_name: (string) Name of the CV/Resume file
+    :param motivation_letter_name: (String) Name of the motivation letter file of the candidate
+    :param file_name: (String) Generated name of the PDF to create / "Candidat" + str(generate_number()) + ".pdf"
+
+    Creates and saves a merged PDF, containing all the candidate's separate files (CV/Resume, Motivation Letter,
+    Certificates, etc...)
+
+    """
 
     #Merge the first page, the cv , and the motivation letter
     merger = PdfFileMerger()
@@ -125,7 +148,37 @@ def merge_pdfs(cv_name,motivation_letter_name, EMAIL, PHONE_NUMBER, FULLNAME):
             filepath = root + os.sep + "PDF_Converted_Files" + os.sep + file
             merger.append(PdfFileReader(open(filepath, 'rb')))
 
+    #Saves the merged PDF as 'File_name', in the folder "Final'
     merger.write(root + os.sep + "Final" + os.sep + file_name)
+
+def merge_pdfs(cv_name,motivation_letter_name, EMAIL, PHONE_NUMBER, FULLNAME):
+    """
+
+    :param cv_name: (string) Name of the CV/Resume file
+    :param motivation_letter_name: (String) Name of the motivation letter file of the candidate
+    :param EMAIL: (string) Email of the candidate
+    :param PHONE_NUMBER: (string) Phone number of the candidate
+    :param FULLNAME: (string) Name of the candidate
+
+    Once the candidate's documents are converted to PDF, this function's role is
+    to merge all the PDFs, creating a unique output PDF containing all the candidate's files.
+    *Remark* In addition to merging all the candidate's files, we will also generate a pdf Page containing
+    the name, email, and phone number of the candidate.
+
+    """
+    # If the candidate's file is empty, return null
+    if not len(os.listdir("PDF_Converted_Files")):
+        return
+
+    file_name = "Candidat" + str(generate_number()) + ".pdf"
+    output_file = "PDF_Converted_Files" + os.sep + file_name
+    root = os.path.abspath(os.curdir)
+
+    # Generate a PDF containing the first page, with the candidate name, phone number, and email
+    Create_First_PDF_Page(FULLNAME, EMAIL, PHONE_NUMBER, output_file)
+
+    # Merges all the PDF-converted files of the candidate
+    Merge_Pdfs_Pages(root, output_file, cv_name, motivation_letter_name, file_name)
 
     # Returns the new PDF's name
     return file_name
@@ -156,4 +209,3 @@ def clean():
 
 # TEST FUNCTIONS (TO DELETE)
 # merge_pdfs("CV_AliDoggaz.pdf", "", 'test@gmail.com', '26337393', "ALI DOGGAZ")
-
